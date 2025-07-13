@@ -10,8 +10,9 @@ interface KeyboardShortcuts {
   onDelete: () => void;
   onSelectAll: () => void;
   onEscape: () => void;
-  onRename:(fileId: string)=>void;
+  onRename: (fileId?: string) => void;
 }
+
 export const useKeyboardShortcuts = ({
   onCopy,
   onCut,
@@ -24,7 +25,7 @@ export const useKeyboardShortcuts = ({
 }: KeyboardShortcuts) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore shortcuts when typing in inputs
+      // Ignore shortcuts when typing in inputs or editable elements
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -58,9 +59,10 @@ export const useKeyboardShortcuts = ({
             e.preventDefault();
             onDelete();
             break;
-            case 'F2':
+          case 'F2':
             e.preventDefault();
             onRename(fileId);
+            break;  // <-- Fix: add break here to prevent fallthrough
           case 'Escape':
             e.preventDefault();
             onEscape();
@@ -71,5 +73,14 @@ export const useKeyboardShortcuts = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onCopy, onCut, onPaste, onDelete, onSelectAll, onEscape,onRename]);
+  }, [
+    onCopy,
+    onCut,
+    onPaste,
+    onDelete,
+    onSelectAll,
+    onEscape,
+    onRename,
+    fileId,
+  ]);
 };

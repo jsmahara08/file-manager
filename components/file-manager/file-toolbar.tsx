@@ -1,19 +1,21 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { 
-  Upload, 
-  FolderPlus, 
-  RefreshCw, 
-  Grid3x3, 
-  List, 
-  Trash2, 
+import { useRef, useState } from 'react';
+import {
+  Upload,
+  FolderPlus,
+  RefreshCw,
+  Grid3x3,
+  List,
+  Trash2,
   Download,
   Eye,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import { ImageUploadModal } from './image-upload-modal';
 
 interface FileToolbarProps {
@@ -28,6 +30,8 @@ interface FileToolbarProps {
   onDelete: () => void;
   onPreview: () => void;
   onDownload: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
 
 export const FileToolbar = ({
@@ -42,6 +46,8 @@ export const FileToolbar = ({
   onDelete,
   onPreview,
   onDownload,
+  searchQuery,
+  onSearchChange,
 }: FileToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showImageUpload, setShowImageUpload] = useState(false);
@@ -66,7 +72,8 @@ export const FileToolbar = ({
 
   return (
     <>
-      <div className="flex items-center gap-2 p-3 border-b bg-muted/30">
+      <div className="flex items-center gap-2 p-3 border-b bg-muted/30 flex-wrap">
+        {/* Left Side Buttons */}
         <Button
           variant="outline"
           size="sm"
@@ -76,7 +83,7 @@ export const FileToolbar = ({
           <Upload className="w-4 h-4" />
           Upload Files
         </Button>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -86,7 +93,7 @@ export const FileToolbar = ({
           <ImageIcon className="w-4 h-4" />
           Upload Image
         </Button>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -96,9 +103,9 @@ export const FileToolbar = ({
           <FolderPlus className="w-4 h-4" />
           New Folder
         </Button>
-        
+
         <Separator orientation="vertical" className="h-6" />
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -108,9 +115,9 @@ export const FileToolbar = ({
           <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
-        
+
         <Separator orientation="vertical" className="h-6" />
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -121,7 +128,7 @@ export const FileToolbar = ({
           <Download className="w-4 h-4" />
           Paste
         </Button>
-        
+
         {hasSelection && (
           <>
             {isSingleSelection && (
@@ -135,7 +142,7 @@ export const FileToolbar = ({
                 Preview
               </Button>
             )}
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -143,9 +150,9 @@ export const FileToolbar = ({
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Download {hasSelection ? `(${selectedFiles.length})` : ''}
+              Download ({selectedFiles.length})
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -157,10 +164,19 @@ export const FileToolbar = ({
             </Button>
           </>
         )}
-        
+
         <div className="flex-1" />
-        
-        <div className="flex items-center gap-1">
+
+        {/* Search and View Mode */}
+        <div className="flex items-center gap-2">
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search files or folders..."
+            className="w-64"
+          />
+
           <Button
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="sm"
@@ -169,7 +185,7 @@ export const FileToolbar = ({
           >
             <Grid3x3 className="w-4 h-4" />
           </Button>
-          
+
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
@@ -179,7 +195,7 @@ export const FileToolbar = ({
             <List className="w-4 h-4" />
           </Button>
         </div>
-        
+
         <input
           ref={fileInputRef}
           type="file"

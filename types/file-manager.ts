@@ -24,8 +24,23 @@ export interface FileManagerState {
   error: string | null;
 }
 
+// Explicit modal types for clarity and type safety
+export type ModalType = 'rename' | 'createFolder' | 'delete' | 'move' | 'preview';
+
+export interface FileModalsState {
+  rename: boolean;
+  createFolder: boolean;
+  delete: boolean;
+  move: boolean;
+  preview: boolean;
+  renameFileId: string;
+  deleteFileIds: string[];
+  previewFile: FileItem | null;
+}
+
 export interface FileOperation {
-  type: 'upload' | 'download' | 'delete' | 'rename' | 'move' | 'copy' | 'create-folder';
+  // Note: fixed missing closing quote for 'create-folder'
+  type: 'upload' | 'download' | 'delete' | 'rename' | 'move' | 'copy' | 'create-folder' | 'preview';
   fileIds: string[];
   targetPath?: string;
   newName?: string;

@@ -33,16 +33,28 @@ export const FileManager = () => {
     previewFile: null as FileItem | null,
   });
 
+  // Added search query state here
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter files based on searchQuery (case insensitive)
+  const filteredFiles = state.files.filter(file =>
+    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
+
   useKeyboardShortcuts({
     onCopy: () => actions.copyFiles(state.selectedFiles),
     onCut: () => actions.cutFiles(state.selectedFiles),
     onPaste: () => actions.pasteFiles(),
     onDelete: () => {
       if (state.selectedFiles.length > 0) {
-        setModals(prev => ({ 
-          ...prev, 
-          delete: true, 
-          deleteFileIds: state.selectedFiles 
+        setModals(prev => ({
+          ...prev,
+          delete: true,
+          deleteFileIds: state.selectedFiles,
         }));
       }
     },
@@ -51,6 +63,13 @@ export const FileManager = () => {
       actions.clearSelection();
       setContextMenu(null);
     },
+    onRename: (fileId?: string) => {
+      const targetFileId = fileId || (state.selectedFiles.length === 1 ? state.selectedFiles[0] : undefined);
+      if (targetFileId) {
+        setModals(prev => ({ ...prev, rename: true, renameFileId: targetFileId }));
+      }
+    },
+    fileId: state.selectedFiles.length === 1 ? state.selectedFiles[0] : undefined,
   });
 
   const handleContextMenu = (e: React.MouseEvent, fileId?: string) => {
@@ -84,10 +103,10 @@ export const FileManager = () => {
 
   const handleDelete = () => {
     if (state.selectedFiles.length > 0) {
-      setModals(prev => ({ 
-        ...prev, 
-        delete: true, 
-        deleteFileIds: state.selectedFiles 
+      setModals(prev => ({
+        ...prev,
+        delete: true,
+        deleteFileIds: state.selectedFiles,
       }));
     }
   };
@@ -103,12 +122,11 @@ export const FileManager = () => {
   const handleDownload = async (fileId?: string) => {
     const targetFileIds = fileId ? [fileId] : state.selectedFiles;
     const filesToDownload = state.files.filter(f => targetFileIds.includes(f.id) && f.type === 'file');
-    
+
     if (filesToDownload.length === 0) return;
 
     try {
       if (filesToDownload.length === 1) {
-        // Single file download
         const file = filesToDownload[0];
         const response = await fetch(`/api/download?fileId=${encodeURIComponent(file.id)}`);
         if (response.ok) {
@@ -125,13 +143,12 @@ export const FileManager = () => {
           console.error('Download failed:', response.statusText);
         }
       } else {
-        // Multiple files download
         const response = await fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileIds: targetFileIds }),
         });
-        
+
         if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
@@ -180,7 +197,7 @@ export const FileManager = () => {
   };
 
   return (
-    <div 
+    <div
       className="h-screen flex flex-col bg-background"
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -192,14 +209,14 @@ export const FileManager = () => {
           onNavigate={actions.navigateToPath}
           files={state.files}
         />
-        
+
         <div className="flex-1 flex flex-col">
           <div className="border-b bg-card">
             <FileBreadcrumbs
               currentPath={state.currentPath}
               onNavigate={actions.navigateToPath}
             />
-            
+
             <FileToolbar
               selectedFiles={state.selectedFiles}
               viewMode={state.viewMode}
@@ -212,9 +229,11 @@ export const FileManager = () => {
               onDelete={handleDelete}
               onPreview={() => handlePreview()}
               onDownload={() => handleDownload()}
+              searchQuery={searchQuery}               // <-- pass searchQuery
+              onSearchChange={handleSearchChange}    // <-- pass onSearchChange handler
             />
           </div>
-          
+
           <div className="flex-1 overflow-auto">
             {state.isLoading ? (
               <div className="flex items-center justify-center h-full">
@@ -226,7 +245,7 @@ export const FileManager = () => {
               </div>
             ) : state.viewMode === 'grid' ? (
               <FileGrid
-                files={state.files}
+                files={filteredFiles} // <-- filtered files here
                 selectedFiles={state.selectedFiles}
                 onFileSelect={actions.toggleFileSelection}
                 onFileDoubleClick={(file) => {
@@ -240,7 +259,7 @@ export const FileManager = () => {
               />
             ) : (
               <FileList
-                files={state.files}
+                files={filteredFiles} // <-- filtered files here
                 selectedFiles={state.selectedFiles}
                 onFileSelect={actions.toggleFileSelection}
                 onFileDoubleClick={(file) => {
@@ -259,7 +278,7 @@ export const FileManager = () => {
           </div>
         </div>
       </div>
-      
+
       {contextMenu && (
         <FileContextMenu
           x={contextMenu.x}
@@ -302,19 +321,19 @@ export const FileManager = () => {
           hasClipboard={state.clipboard.files.length > 0}
         />
       )}
-      
+
       <FileModals
         modals={modals}
         onCreateFolder={confirmCreateFolder}
         onRename={confirmRename}
         onDelete={confirmDelete}
-        onClose={(modalType) => {
-          setModals(prev => ({ 
-            ...prev, 
+        onClose={(modalType: "rename" | "createFolder" | "delete" | "move" | "preview") => {
+          setModals(prev => ({
+            ...prev,
             [modalType]: false,
             ...(modalType === 'rename' && { renameFileId: '' }),
             ...(modalType === 'delete' && { deleteFileIds: [] }),
-            ...(modalType === 'preview' && { previewFile: null })
+            ...(modalType === 'preview' && { previewFile: null }),
           }));
         }}
         selectedFiles={modals.deleteFileIds}

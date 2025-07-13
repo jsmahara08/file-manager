@@ -37,7 +37,7 @@ export const FileList = ({
   onSort,
 }: FileListProps) => {
   const SortIcon = sortOrder === 'asc' ? ChevronUp : ChevronDown;
-  const baseUrl = process.env.NEXT_PUBLIC_UPLOADS_BASE_URL || 'http://localhost:3001/uploads';
+  const baseUrl = process.env.NEXT_PUBLIC_UPLOADS_BASE_URL || 'http://localhost:3000/uploads';
 
   // Map file icon names to lucide-react icon components
   const iconMap: Record<string, React.ElementType> = {
